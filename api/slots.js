@@ -60,6 +60,7 @@ export default async function handler(req, res) {
       orderBy: 'startTime',
     });
 
+const events = response.data.items || [];
 const bookedHours = new Set();
 events.forEach(event => {
   const start = new Date(event.start.dateTime || event.start.date);
