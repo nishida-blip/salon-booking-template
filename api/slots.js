@@ -7,7 +7,7 @@ import { google } from 'googleapis';
 // サロンの営業設定（ここを変えるだけでカスタマイズできる）
 const BUSINESS_HOURS = { start: 10, end: 18 }; // 10:00〜18:00
 const SLOT_DURATION = 60; // 1枠60分
-const CLOSED_DAYS = [0]; // 0=日曜定休（0=日,1=月,...,6=土）
+const CLOSED_DAYS = []; // 定休日なし
 const CALENDAR_ID = process.env.CALENDAR_ID; // Vercelの環境変数から読む
 
 export default async function handler(req, res) {
