@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hair Salon — ご予約</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #F7F4EF;
+  --dark: #1C1C1A;
+  --mid: #6B6860;
+  --light: #B8B4AB;
+  --accent: #8B7355;
+  --accent-light: #EDE8E0;
+  --green: #4A7C59;
+  --green-light: #E8F2EC;
+  --red-light: #F5EEEE;
+  --red: #9B4A4A;
+  --white: #FFFFFF;
+  --border: rgba(28,28,26,0.12);
+  --radius: 4px;
+  --radius-lg: 10px;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--cream);
+  color: var(--dark);
+  min-height: 100vh;
+  font-weight: 300;
+}
+
+header {
+  background: var(--dark);
+  color: var(--white);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; letter-spacing: 0.15em; }
+.logo span { font-weight: 300; color: var(--light); font-size: 12px; letter-spacing: 0.2em; display: block; margin-top: 2px; }
+
+main { max-width: 680px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+.steps { display: flex; align-items: center; margin-bottom: 2.5rem; }
+.step-item { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.08em; color: var(--light); flex-shrink: 0; }
+.step-item.active { color: var(--dark); font-weight: 500; }
+.step-item.done { color: var(--accent); }
+.step-num { width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.step-item.active .step-num { background: var(--dark); color: var(--white); border-color: var(--dark); }
+.step-item.done .step-num { background: var(--accent); color: var(--white); border-color: var(--accent); }
+.step-line { flex: 1; height: 1px; background: var(--border); margin: 0 6px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.screen-head { margin-bottom: 1.75rem; }
+.screen-head h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; letter-spacing: 0.05em; margin-bottom: 4px; }
+.screen-head p { font-size: 13px; color: var(--mid); }
+
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.cal-nav { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--radius); background: none; cursor: pointer; font-size: 16px; color: var(--mid); display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.cal-nav:hover { background: var(--cream); }
+.cal-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; letter-spacing: 0.05em; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-dow { text-align: center; font-size: 10px; letter-spacing: 0.08em; color: var(--light); padding: 6px 0; }
+.cal-day { text-align: center; font-size: 13px; padding: 8px 2px; border-radius: var(--radius); color: var(--light); cursor: default; }
+.cal-day.cur { color: var(--dark); }
+.cal-day.avail { background: var(--green-light); color: var(--green); font-weight: 500; cursor: pointer; transition: background 0.15s; }
+.cal-day.avail:hover { background: #C8DFD0; }
+.cal-day.full { background: #F3F1EE; color: var(--light); text-decoration: line-through; }
+.cal-day.selected { background: var(--dark) !important; color: var(--white) !important; }
+.cal-day.today { outline: 1.5px solid var(--accent); outline-offset: -1.5px; }
+.cal-day.loading { background: #F3F1EE; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mid); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+.note { background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 1rem; font-size: 12px; color: var(--mid); margin-bottom: 1rem; line-height: 1.6; }
+.error-note { background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 1rem; font-size: 12px; color: var(--red); margin-bottom: 1rem; line-height: 1.6; display: none; }
+
+.slot-label { font-size: 12px; color: var(--mid); margin-bottom: 0.75rem; letter-spacing: 0.05em; }
+.slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.slot-btn { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 4px; text-align: center; font-size: 13px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; background: var(--white); color: var(--dark); transition: all 0.15s; }
+.slot-btn:hover { background: var(--cream); border-color: var(--accent); }
+.slot-btn.selected { background: var(--dark); color: var(--white); border-color: var(--dark); }
+.slot-btn.taken { background: #F3F1EE; color: var(--light); cursor: not-allowed; text-decoration: line-through; }
+
+.slots-loading { text-align: center; padding: 2rem; color: var(--light); font-size: 13px; }
+
+.form-row { margin-bottom: 1.25rem; }
+.form-row:last-child { margin-bottom: 0; }
+.form-row label { display: block; font-size: 12px; letter-spacing: 0.06em; color: var(--mid); margin-bottom: 6px; }
+.form-row input, .form-row select, .form-row textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; font-weight: 300; background: var(--white); color: var(--dark); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent); }
+.form-row .hint { font-size: 11px; color: var(--light); margin-top: 4px; }
+.req { color: var(--red); }
+
+.conf-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.conf-row:last-child { border-bottom: none; }
+.conf-label { color: var(--mid); font-size: 12px; letter-spacing: 0.05em; flex-shrink: 0; margin-right: 1rem; }
+.conf-val { text-align: right; }
+
+.btn-row { display: flex; gap: 10px; margin-top: 1rem; }
+.btn-back { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; background: none; color: var(--mid); font-size: 13px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; }
+.btn-back:hover { background: var(--cream); }
+.btn-primary { flex: 1; border: none; border-radius: var(--radius); padding: 14px 20px; background: var(--dark); color: var(--white); font-size: 14px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; letter-spacing: 0.05em; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary.full { width: 100%; }
+
+.success-wrap { text-align: center; padding: 2rem 1rem; }
+.success-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--green-light); color: var(--green); font-size: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
+.success-wrap h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; margin-bottom: 0.5rem; }
+.success-wrap p { font-size: 14px; color: var(--mid); margin-bottom: 1.25rem; }
+.success-detail { background: var(--cream); border-radius: var(--radius); padding: 1rem; text-align: left; font-size: 14px; margin-bottom: 1.25rem; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SALON<span>HAIR & BEAUTY</span></div>
+</header>
+
+<main>
+  <div class="steps" id="steps">
+    <div class="step-item active" id="s1"><div class="step-num">1</div>日程</div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s2"><div class="step-num">2</div>時間</div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s3"><div class="step-num">3</div>お客様情報</div>
+    <div class="step-line"></div>
+    <div class="step-item" id="s4"><div class="step-num">4</div>確認・完了</div>
+  </div>
+
+  <!-- Screen 1: Calendar -->
+  <div class="screen active" id="screen1">
+    <div class="screen-head">
+      <h1>日程を選択</h1>
+      <p>ご希望の日付をお選びください</p>
+    </div>
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">&#8249;</button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-nav" onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#C8DFD0"></div>空きあり</div>
+        <div class="leg"><div class="leg-dot" style="background:#F3F1EE"></div>満員 / 定休</div>
+      </div>
+    </div>
+    <div class="note">
+      ※ 空き状況はGoogleカレンダーの予約状況をリアルタイムで反映しています。予約名など個人情報は一切表示されません。
+    </div>
+  </div>
+
+  <!-- Screen 2: Time -->
+  <div class="screen" id="screen2">
+    <div class="screen-head">
+      <h1>時間を選択</h1>
+      <p id="date-label-sub"></p>
+    </div>
+    <div class="card">
+      <p class="slot-label">空き時間 — 1枠60分</p>
+      <div id="slots-loading" class="slots-loading">読み込み中...</div>
+      <div class="slots-grid" id="slots-grid"></div>
+    </div>
+    <div class="error-note" id="slots-error">空き時間の取得に失敗しました。ページを再読み込みしてください。</div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo(1)">← 戻る</button>
+    </div>
+  </div>
+
+  <!-- Screen 3: Info -->
+  <div class="screen" id="screen3">
+    <div class="screen-head">
+      <h1>お客様情報</h1>
+      <p>ご連絡先とご希望のメニューをご入力ください</p>
+    </div>
+    <div class="card">
+      <div class="form-row">
+        <label>お名前 <span class="req">*</span></label>
+        <input type="text" id="inp-name" placeholder="山田 花子">
+      </div>
+      <div class="form-row">
+        <label>電話番号 <span class="req">*</span></label>
+        <input type="tel" id="inp-tel" placeholder="090-0000-0000">
+      </div>
+      <div class="form-row">
+        <label>メールアドレス</label>
+        <input type="email" id="inp-email" placeholder="example@email.com">
+        <p class="hint">予約確認メールをお送りします（任意）</p>
+      </div>
+      <div class="form-row">
+        <label>ご希望のメニュー</label>
+        <select id="inp-menu">
+          <option>カット</option>
+          <option>カット ＋ カラー</option>
+          <option>カット ＋ パーマ</option>
+          <option>カラーのみ</option>
+          <option>トリートメント</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>ご要望・備考</label>
+        <input type="text" id="inp-note" placeholder="例：前回と同じスタイルで / ショートにしたい">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo(2)">← 戻る</button>
+      <button class="btn-primary" onclick="goToConfirm()">内容を確認する →</button>
+    </div>
+  </div>
+
+  <!-- Screen 4: Confirm -->
+  <div class="screen" id="screen4">
+    <div class="screen-head">
+      <h1>予約内容の確認</h1>
+      <p>内容をご確認のうえ、予約を確定してください</p>
+    </div>
+    <div class="card">
+      <div class="conf-row"><span class="conf-label">日時</span><span class="conf-val" id="conf-dt"></span></div>
+      <div class="conf-row"><span class="conf-label">メニュー</span><span class="conf-val" id="conf-menu"></span></div>
+      <div class="conf-row"><span class="conf-label">お名前</span><span class="conf-val" id="conf-name"></span></div>
+      <div class="conf-row"><span class="conf-label">電話番号</span><span class="conf-val" id="conf-tel"></span></div>
+      <div class="conf-row"><span class="conf-label">メール</span><span class="conf-val" id="conf-email" style="font-size:13px"></span></div>
+      <div class="conf-row"><span class="conf-label">備考</span><span class="conf-val" id="conf-note" style="font-size:13px;color:#6B6860"></span></div>
+    </div>
+    <div class="error-note" id="book-error"></div>
+    <div class="btn-row">
+      <button class="btn-back" id="btn-back4" onclick="goTo(3)">← 戻る</button>
+      <button class="btn-primary" id="btn-confirm" onclick="confirmBooking()">予約を確定する</button>
+    </div>
+  </div>
+
+  <!-- Screen 5: Success -->
+  <div class="screen" id="screen5">
+    <div class="card">
+      <div class="success-wrap">
+        <div class="success-icon">✓</div>
+        <h1>ご予約完了</h1>
+        <p id="success-msg"></p>
+        <div class="success-detail" id="success-detail"></div>
+        <p style="font-size:12px;color:var(--light)">ご確認メールをお送りしました。<br>当日のご来店をお待ちしております。</p>
+      </div>
+    </div>
+    <button class="btn-primary full" style="margin-top:1rem" onclick="reset()">最初に戻る</button>
+  </div>
+
+</main>
+
+<script>
+// ================================================================
+// 設定（Vercelにデプロイ後はここは変更不要。環境変数で制御する）
+// ================================================================
+// ローカルテスト時: ''（空文字）のままでOK → ダミーモードで動作
+// Vercelデプロイ後: 自動でAPIを呼び出す
+const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+  ? '' // ローカルではダミーモード
+  : ''; // Vercel上では同じオリジンのAPIを使う（/api/slots, /api/book）
+
+const IS_LOCAL = window.location.protocol === 'file:' ||
+  window.location.hostname === '127.0.0.1' ||
+  window.location.hostname === 'localhost';
+
+// ================================================================
+// カレンダーデータ取得
+// ================================================================
+
+// カレンダーの空き状況キャッシュ（同じ月を何度も取得しないため）
+const availCache = {};
+
+async function fetchMonthAvailability(year, month) {
+  const cacheKey = `${year}-${month}`;
+  if (availCache[cacheKey]) return availCache[cacheKey];
+
+  if (IS_LOCAL) {
+    // ローカル（HTMLを直接開いている）場合はダミーデータを返す
+    return generateDummyMonth(year, month);
+  }
+
+  // Vercel上: 月の最初〜最後の日を1日ずつAPIに問い合わせるのは重いので、
+  // ここでは「月単位の空き有無」を判定するため、slots APIを数日サンプリングする簡易実装
+  // 本番では専用の /api/availability?month=YYYY-MM エンドポイントを作るとより良い
+  const result = { avail: new Set(), full: new Set() };
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // 並列でAPIを叩く（最大7日ずつバッチ処理）
+  const promises = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    promises.push(
+      fetch(`/api/slots?date=${dateStr}`)
+        .then(r => r.json())
+        .then(data => ({ d, data }))
+        .catch(() => ({ d, data: { slots: [] } }))
+    );
+  }
+
+  const results = await Promise.all(promises);
+  results.forEach(({ d, data }) => {
+    if (data.closed || data.past) return;
+    const hasAvail = (data.slots || []).some(s => s.available);
+    if (hasAvail) result.avail.add(d);
+    else result.full.add(d);
+  });
+
+  availCache[cacheKey] = result;
+  return result;
+}
+
+function generateDummyMonth(year, month) {
+  // ローカル確認用ダミーデータ（本番では使われない）
+  const result = { avail: new Set(), full: new Set() };
+  const today = new Date();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(year, month, d);
+    if (dt < today) continue;
+    if (dt.getDay() === 0) continue; // 日曜定休
+    if (Math.random() > 0.25) result.avail.add(d);
+    else result.full.add(d);
+  }
+  return result;
+}
+
+// ================================================================
+// カレンダー描画
+// ================================================================
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const DOWS = ['日','月','火','水','木','金','土'];
+const today = new Date();
+let cur = { y: today.getFullYear(), m: today.getMonth() };
+let sel = { date: null, slot: null };
+let monthData = { avail: new Set(), full: new Set() };
+
+async function renderCal() {
+  document.getElementById('cal-title').textContent = `${cur.y}年 ${MONTHS[cur.m]}`;
+  const grid = document.getElementById('cal-grid');
+
+  // ローディング状態を表示
+  const first = new Date(cur.y, cur.m, 1).getDay();
+  const last = new Date(cur.y, cur.m + 1, 0).getDate();
+  grid.innerHTML = DOWS.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) grid.innerHTML += `<div class="cal-day"></div>`;
+  for (let d = 1; d <= last; d++) {
+    grid.innerHTML += `<div class="cal-day loading">${d}</div>`;
+  }
+
+  // APIから空き状況を取得
+  monthData = await fetchMonthAvailability(cur.y, cur.m);
+  drawCalDays();
+}
+
+function drawCalDays() {
+  const grid = document.getElementById('cal-grid');
+  const first = new Date(cur.y, cur.m, 1).getDay();
+  const last = new Date(cur.y, cur.m + 1, 0).getDate();
+  grid.innerHTML = DOWS.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) grid.innerHTML += `<div class="cal-day"></div>`;
+  for (let d = 1; d <= last; d++) {
+    const dt = new Date(cur.y, cur.m, d);
+    const past = dt < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = dt.toDateString() === today.toDateString();
+    const isSel = sel.date && sel.date.toDateString() === dt.toDateString();
+    let cls = 'cal-day';
+    if (!past) cls += ' cur';
+    if (isSel) cls += ' selected';
+    else if (!past && monthData.avail.has(d)) cls += ' avail';
+    else if (!past && monthData.full.has(d)) cls += ' full';
+    if (isToday) cls += ' today';
+    const onclick = (!past && monthData.avail.has(d) && !isSel) ? `selectDay(${d})` : '';
+    grid.innerHTML += `<div class="${cls}"${onclick ? ` onclick="${onclick}"` : ''}>${d}</div>`;
+  }
+}
+
+function changeMonth(dir) {
+  cur.m += dir;
+  if (cur.m < 0) { cur.m = 11; cur.y--; }
+  if (cur.m > 11) { cur.m = 0; cur.y++; }
+  renderCal();
+}
+
+async function selectDay(d) {
+  sel.date = new Date(cur.y, cur.m, d);
+  sel.slot = null;
+  drawCalDays();
+  goTo(2);
+  await renderSlots();
+}
+
+// ================================================================
+// スロット描画
+// ================================================================
+async function renderSlots() {
+  const label = `${sel.date.getFullYear()}年${MONTHS[sel.date.getMonth()]}${sel.date.getDate()}日（${DOWS[sel.date.getDay()]}）`;
+  document.getElementById('date-label-sub').textContent = label + ' の空き時間';
+
+  const loadingEl = document.getElementById('slots-loading');
+  const gridEl = document.getElementById('slots-grid');
+  const errorEl = document.getElementById('slots-error');
+
+  loadingEl.style.display = 'block';
+  gridEl.innerHTML = '';
+  errorEl.style.display = 'none';
+
+  let slots = [];
+
+  if (IS_LOCAL) {
+    // ローカル: ダミーデータ
+    await new Promise(r => setTimeout(r, 400)); // 読み込み感を演出
+    slots = [10,11,12,13,14,15,16,17].map(h => ({
+      hour: h,
+      label: `${h}:00`,
+      available: ![12, 16].includes(h),
+    }));
+  } else {
+    // Vercel: APIから取得
+    const dateStr = `${sel.date.getFullYear()}-${String(sel.date.getMonth()+1).padStart(2,'0')}-${String(sel.date.getDate()).padStart(2,'0')}`;
+    try {
+      const res = await fetch(`/api/slots?date=${dateStr}`);
+      const data = await res.json();
+      slots = data.slots || [];
+    } catch (e) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      return;
+    }
+  }
+
+  loadingEl.style.display = 'none';
+
+  if (slots.length === 0) {
+    gridEl.innerHTML = '<p style="color:var(--light);font-size:13px;padding:1rem 0">この日の空き時間はありません</p>';
+    return;
+  }
+
+  gridEl.innerHTML = slots.map(({ hour, label, available }) => {
+    const isSel = sel.slot === hour;
+    if (available) {
+      return `<button class="slot-btn${isSel ? ' selected' : ''}" onclick="selectSlot(${hour})">${label}</button>`;
+    } else {
+      return `<button class="slot-btn taken" disabled>${label}</button>`;
+    }
+  }).join('');
+}
+
+function selectSlot(h) {
+  sel.slot = h;
+  renderSlots();
+  setTimeout(() => goTo(3), 180);
+}
+
+// ================================================================
+// フォーム → 確認画面
+// ================================================================
+function goToConfirm() {
+  const name = document.getElementById('inp-name').value.trim();
+  const tel = document.getElementById('inp-tel').value.trim();
+  if (!name) { alert('お名前をご入力ください'); return; }
+  if (!tel) { alert('電話番号をご入力ください'); return; }
+  const dtLabel = `${sel.date.getFullYear()}年${MONTHS[sel.date.getMonth()]}${sel.date.getDate()}日（${DOWS[sel.date.getDay()]}）　${sel.slot}:00 〜 ${sel.slot + 1}:00`;
+  document.getElementById('conf-dt').textContent = dtLabel;
+  document.getElementById('conf-menu').textContent = document.getElementById('inp-menu').value;
+  document.getElementById('conf-name').textContent = name;
+  document.getElementById('conf-tel').textContent = tel;
+  document.getElementById('conf-email').textContent = document.getElementById('inp-email').value || '未入力';
+  document.getElementById('conf-note').textContent = document.getElementById('inp-note').value || 'なし';
+  goTo(4);
+}
+
+// ================================================================
+// 予約確定（Google Calendar APIへ送信）
+// ================================================================
+async function confirmBooking() {
+  const btnConfirm = document.getElementById('btn-confirm');
+  const btnBack = document.getElementById('btn-back4');
+  const errorEl = document.getElementById('book-error');
+  errorEl.style.display = 'none';
+
+  if (IS_LOCAL) {
+    // ローカル: ダミー成功
+    btnConfirm.disabled = true;
+    btnConfirm.textContent = '処理中...';
+    await new Promise(r => setTimeout(r, 800));
+    showSuccess();
+    btnConfirm.disabled = false;
+    btnConfirm.textContent = '予約を確定する';
+    return;
+  }
+
+  // Vercel: 実際にAPIへPOST送信
+  btnConfirm.disabled = true;
+  btnBack.disabled = true;
+  btnConfirm.textContent = '予約処理中...';
+
+  const dateStr = `${sel.date.getFullYear()}-${String(sel.date.getMonth()+1).padStart(2,'0')}-${String(sel.date.getDate()).padStart(2,'0')}`;
+
+  try {
+    const res = await fetch('/api/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: dateStr,
+        hour: sel.slot,
+        name: document.getElementById('inp-name').value.trim(),
+        tel: document.getElementById('inp-tel').value.trim(),
+        email: document.getElementById('inp-email').value.trim(),
+        menu: document.getElementById('inp-menu').value,
+        note: document.getElementById('inp-note').value.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent = data.error || '予約に失敗しました。しばらくしてから再度お試しください。';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // 月の空きキャッシュを破棄（予約が入ったので再取得が必要）
+    delete availCache[`${sel.date.getFullYear()}-${sel.date.getMonth()}`];
+
+    showSuccess();
+
+  } catch (e) {
+    errorEl.textContent = 'ネットワークエラーが発生しました。接続を確認して再度お試しください。';
+    errorEl.style.display = 'block';
+  } finally {
+    btnConfirm.disabled = false;
+    btnBack.disabled = false;
+    btnConfirm.textContent = '予約を確定する';
+  }
+}
+
+function showSuccess() {
+  const name = document.getElementById('inp-name').value.trim();
+  const dtLabel = `${sel.date.getFullYear()}年${MONTHS[sel.date.getMonth()]}${sel.date.getDate()}日（${DOWS[sel.date.getDay()]}）　${sel.slot}:00 〜 ${sel.slot + 1}:00`;
+  document.getElementById('success-msg').textContent = `${name} 様、ご予約ありがとうございます。`;
+  document.getElementById('success-detail').innerHTML =
+    `<span style="color:#6B6860;font-size:12px">日時</span><br>${dtLabel}<br><br>` +
+    `<span style="color:#6B6860;font-size:12px">メニュー</span><br>${document.getElementById('inp-menu').value}`;
+  goTo(5);
+}
+
+// ================================================================
+// 画面遷移
+// ================================================================
+function goTo(n) {
+  document.querySelectorAll('.screen').forEach((s, i) => s.classList.toggle('active', i === n - 1));
+  document.getElementById('steps').style.display = n === 5 ? 'none' : 'flex';
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`s${i}`);
+    el.className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '');
+    const num = el.querySelector('.step-num');
+    num.textContent = i < n ? '✓' : i;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function reset() {
+  sel = { date: null, slot: null };
+  ['inp-name','inp-tel','inp-email','inp-note'].forEach(id => document.getElementById(id).value = '');
+  goTo(1);
+  drawCalDays();
+}
+
+// 初期化
+renderCal();
+</script>
+</body>
+</html>

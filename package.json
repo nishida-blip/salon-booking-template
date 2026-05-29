@@ -1,0 +1,12 @@
+{
+  "name": "salon-booking-template",
+  "version": "1.0.0",
+  "description": "サロン向け予約システム（Google Calendar API連携）",
+  "private": true,
+  "dependencies": {
+    "googleapis": "^140.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
