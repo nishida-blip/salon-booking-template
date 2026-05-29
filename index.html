@@ -311,11 +311,13 @@ async function fetchMonthAvailability(year, month) {
   const results = await Promise.all(promises);
   results.forEach(({ d, data }) => {
     if (data.closed || data.past) return;
-    const hasAvail = (data.slots || []).some(s => s.available);
+    const slots = data.slots || [];
+    if (slots.length === 0) return; // スロット自体なし（エラー含む）はスキップ
+    const hasAvail = slots.some(s => s.available);
     if (hasAvail) result.avail.add(d);
     else result.full.add(d);
   });
-
+  
   availCache[cacheKey] = result;
   return result;
 }
@@ -530,11 +532,14 @@ async function confirmBooking() {
       return;
     }
 
-    // 月の空きキャッシュを破棄（予約が入ったので再取得が必要）
+   // 月の空きキャッシュを破棄（予約が入ったので再取得が必要）
     delete availCache[`${sel.date.getFullYear()}-${sel.date.getMonth()}`];
 
-    showSuccess();
+    // スロット画面のキャッシュも無効化（同じ時間が再選択できないよう）
+    sel.slot = null;
 
+    showSuccess();
+    
   } catch (e) {
     errorEl.textContent = 'ネットワークエラーが発生しました。接続を確認して再度お試しください。';
     errorEl.style.display = 'block';
