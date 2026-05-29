@@ -60,16 +60,17 @@ export default async function handler(req, res) {
       orderBy: 'startTime',
     });
 
-    const events = response.data.items || [];
-
-    const bookedHours = new Set();
-    events.forEach(event => {
-      const start = new Date(event.start.dateTime || event.start.date);
-      const end = new Date(event.end.dateTime || event.end.date);
-      for (let h = start.getHours(); h < end.getHours(); h++) {
-        bookedHours.add(h);
-      }
-    });
+const bookedHours = new Set();
+events.forEach(event => {
+  const start = new Date(event.start.dateTime || event.start.date);
+  const end = new Date(event.end.dateTime || event.end.date);
+  // UTC→JSTに補正（+9時間）してから時間を取得
+  const startJST = new Date(start.getTime() + 9 * 60 * 60 * 1000);
+  const endJST = new Date(end.getTime() + 9 * 60 * 60 * 1000);
+  for (let h = startJST.getUTCHours(); h < endJST.getUTCHours(); h++) {
+    bookedHours.add(h);
+  }
+});
 
     const slots = [];
     for (let h = BUSINESS_HOURS.start; h < BUSINESS_HOURS.end; h++) {
